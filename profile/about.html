@@ -1,0 +1,79 @@
+<style>
+#hk-about-enois, #hk-about-enois * {box-sizing:border-box;}
+#hk-about-enois{--surface:#0d1221;--purple:#b590ff;--line:rgba(174,153,237,.18);--muted:#a5afca;
+  color:#ebedfa;background:linear-gradient(150deg,rgba(92,61,158,.08),transparent 42%),#0c101e;
+  border:1px solid rgba(171,145,232,.22);border-radius:18px;padding:clamp(20px,4vw,38px);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.58;}
+#hk-about-enois .hk-about-top{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:23px;}
+#hk-about-enois .hk-kicker{margin:0;font:500 10px ui-monospace,Consolas,monospace;letter-spacing:.2em;color:#b6a5dd;text-transform:uppercase;}
+#hk-about-enois .hk-availability{display:flex;gap:8px;align-items:center;color:#94c9b7;font:500 10px ui-monospace,Consolas,monospace;letter-spacing:.07em;}
+#hk-about-enois .hk-availability:before{content:"";width:7px;height:7px;background:#8fddbf;border-radius:50%;box-shadow:0 0 0 4px rgba(107,212,170,.09);animation:hk-about-breathe 3s ease-in-out infinite;}
+#hk-about-enois .hk-about-intro h2{margin:0 0 16px;max-width:730px;font-size:clamp(26px,4.2vw,42px);line-height:1.14;letter-spacing:-.045em;font-weight:780;}
+#hk-about-enois .hk-about-intro h2 em{font-style:normal;color:#b69aff;}
+#hk-about-enois .hk-about-intro p{color:#b9c2d8;font-size:clamp(14px,1.8vw,16px);max-width:760px;margin:0 0 13px;}
+#hk-about-enois .hk-about-intro strong{color:#eaecff;font-weight:680;}
+#hk-about-enois .hk-path{margin:26px 0;border:1px solid var(--line);background:rgba(147,116,230,.055);border-radius:12px;padding:15px 14px;display:grid;grid-template-columns:1fr 18px 1.15fr 18px 1fr 18px 1fr;align-items:center;gap:8px;}
+#hk-about-enois .hk-step{font:600 clamp(9px,1.4vw,12px)/1.4 ui-monospace,Consolas,monospace;white-space:nowrap;text-align:center;color:#b7c3df;}
+#hk-about-enois .hk-step:first-child{color:#d0c2ff;}
+#hk-about-enois .hk-step:last-child{color:#9abff8;}
+#hk-about-enois .hk-step-arrow{height:1px;position:relative;background:linear-gradient(90deg,#b39add,#7caaf5);opacity:.8;}
+#hk-about-enois .hk-step-arrow:after{content:"";position:absolute;right:0;top:-3px;border:4px solid transparent;border-left-color:#9cabe3;transform:translateX(7px);}
+#hk-about-enois .hk-about-middle{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,.58fr);gap:16px;margin:21px 0 31px;}
+#hk-about-enois .hk-note{border-left:2px solid #9e7bde;padding:5px 0 5px 16px;color:#aebbd3;font-size:14px;}
+#hk-about-enois .hk-note b{color:#eae1ff;}
+#hk-about-enois .hk-impact{padding:15px;border:1px solid rgba(136,166,229,.18);border-radius:11px;background:rgba(62,78,127,.10);display:flex;flex-direction:column;justify-content:center;gap:4px;}
+#hk-about-enois .hk-impact strong{color:#e8f0ff;font:700 clamp(23px,3.3vw,35px) ui-monospace,Consolas,monospace;letter-spacing:-.06em;}
+#hk-about-enois .hk-impact strong span{color:#b395fc;}
+#hk-about-enois .hk-impact small{color:#9eaac4;font-size:11px;line-height:1.45;}
+#hk-about-enois .hk-section-label{font:600 10px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:#9e8dbd;margin:0 0 12px;display:flex;gap:12px;align-items:center;}
+#hk-about-enois .hk-section-label:after{content:"";flex:1;height:1px;background:var(--line);}
+#hk-about-enois .hk-experiments{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+#hk-about-enois details.hk-work{background:rgba(28,30,54,.70);border:1px solid rgba(167,142,229,.23);border-radius:13px;overflow:hidden;min-width:0;transition:transform .2s,border-color .2s,box-shadow .2s;}
+#hk-about-enois details.hk-work:hover,#hk-about-enois details.hk-work[open]{border-color:rgba(177,144,251,.55);box-shadow:0 13px 26px rgba(0,0,0,.14);transform:translateY(-2px);}
+#hk-about-enois details.hk-work summary{cursor:pointer;list-style:none;padding:17px 15px;position:relative;min-height:136px;}
+#hk-about-enois details.hk-work summary::-webkit-details-marker{display:none;}
+#hk-about-enois .hk-work-index{font:500 10px ui-monospace,Consolas,monospace;letter-spacing:.14em;color:#9a8dbf;display:block;margin-bottom:14px;}
+#hk-about-enois .hk-work-title{display:block;font-size:17px;letter-spacing:-.03em;color:#f1ebff;font-weight:730;margin-bottom:5px;}
+#hk-about-enois .hk-work-tagline{display:block;color:#aeb5ce;font-size:12px;padding-right:15px;line-height:1.5;}
+#hk-about-enois .hk-open-icon{position:absolute;right:13px;top:16px;color:#b28dff;font-size:18px;font-weight:300;transition:transform .2s;}
+#hk-about-enois details[open] .hk-open-icon{transform:rotate(45deg);}
+#hk-about-enois .hk-work-expand{padding:0 15px 17px;border-top:1px solid rgba(159,130,235,.16);}
+#hk-about-enois .hk-work-expand p{font-size:12px;line-height:1.65;color:#b9c5de;margin:13px 0 0;}
+#hk-about-enois .hk-work-expand a{display:inline-block;margin-top:10px;font-size:12px;color:#c0a3ff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(192,163,255,.48);}
+#hk-about-enois .hk-work-expand a:hover{color:#e4d7ff;border-color:currentColor;}
+#hk-about-enois .hk-about-cta{margin-top:30px;padding-top:22px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+#hk-about-enois .hk-about-cta h3{margin:0 0 4px;font-size:17px;letter-spacing:-.025em;}
+#hk-about-enois .hk-about-cta p{margin:0;color:#aab4ce;font-size:13px;max-width:520px;}
+#hk-about-enois .hk-links{display:flex;gap:9px;flex-wrap:wrap;}
+#hk-about-enois .hk-links a{color:#e7dcff;display:inline-flex;align-items:center;gap:9px;min-height:39px;padding:10px 13px;border-radius:9px;font-size:12px;font-weight:650;text-decoration:none;border:1px solid rgba(177,151,230,.4);background:rgba(130,92,207,.15);transition:background .2s,transform .2s;}
+#hk-about-enois .hk-links a:hover{background:rgba(130,92,207,.3);transform:translateY(-2px);}
+#hk-about-enois .hk-links a:last-child{background:transparent;color:#c0c8dd;border-color:rgba(161,169,201,.25);}
+#hk-about-enois .hk-footnote{font:10px ui-monospace,Consolas,monospace;color:#737f9b;letter-spacing:.06em;margin-top:20px;}
+@keyframes hk-about-breathe{50%{opacity:.35;box-shadow:0 0 0 6px rgba(107,212,170,.13)}}
+@media(max-width:750px){#hk-about-enois .hk-experiments{grid-template-columns:1fr;}#hk-about-enois details.hk-work summary{min-height:105px;}#hk-about-enois .hk-about-middle{grid-template-columns:1fr;}#hk-about-enois .hk-path{gap:4px;padding:13px 7px;}#hk-about-enois .hk-step{font-size:9px;}#hk-about-enois .hk-about-top{margin-bottom:17px;}}
+@media(max-width:420px){#hk-about-enois{padding:19px 16px;}#hk-about-enois .hk-path{grid-template-columns:1fr 12px 1fr 12px 1fr 12px 1fr;}#hk-about-enois .hk-step{white-space:normal;font-size:8px;}#hk-about-enois .hk-about-intro h2{font-size:29px;}}
+@media(prefers-reduced-motion:reduce){#hk-about-enois *,#hk-about-enois *::before,#hk-about-enois *::after{animation:none!important;transition:none!important;}}
+</style>
+<section id="hk-about-enois" aria-label="Sobre Hugo Kersbaumer">
+  <div class="hk-about-top"><span class="hk-kicker">01 / ABOUT THE ENGINEER</span><span class="hk-availability">OPEN TO IDEAS &amp; CONVERSATIONS</span></div>
+  <div class="hk-about-intro">
+   <h2>Mudei de ferramentas.<br><em>Não de curiosidade.</em></h2>
+   <p>Comecei na engenharia mecânica, tentando entender como as coisas funcionavam. Hoje passo boa parte do tempo fazendo a mesma pergunta, só que sobre <strong>software, infraestrutura e inteligência artificial.</strong></p>
+   <p>Trabalho com automação, dados e melhoria de processos. Fora do trabalho, construo projetos para testar ideias, aprender arquitetura e descobrir o que realmente faz sentido operar.</p>
+  </div>
+  <div class="hk-path" aria-label="Minha trajetória, da mecânica à inteligência artificial">
+   <span class="hk-step">MECÂNICA</span><span class="hk-step-arrow"></span><span class="hk-step">AUTOMAÇÃO<br>&amp; DADOS</span><span class="hk-step-arrow"></span><span class="hk-step">INFRA</span><span class="hk-step-arrow"></span><span class="hk-step">IA &amp; AGENTES</span>
+  </div>
+  <div class="hk-about-middle">
+   <div class="hk-note">Eu gosto de discutir <b>por que</b> uma solução foi escolhida, e não apenas <b>como</b> implementá-la. Se algo pode ser mais simples, provavelmente vale investigar. Meu princípio é <b>Complexity Must Earn Its Place.</b></div>
+   <div class="hk-impact"><strong>4h <span>→</span> 5min</strong><small>De trabalho manual diário a automação em Python, em um processo real de conciliação de apontamentos.</small></div>
+  </div>
+  <div class="hk-section-label">CURRENT EXPERIMENTS / TOQUE PARA EXPLORAR</div>
+  <div class="hk-experiments">
+   <details class="hk-work"><summary><span class="hk-work-index">EXP. 01 / BUILDING</span><span class="hk-open-icon" aria-hidden="true">+</span><span class="hk-work-title">Agent Platform</span><span class="hk-work-tagline">Infraestrutura para executar e avaliar agentes de IA.</span></summary><div class="hk-work-expand"><p>Estou desenvolvendo uma plataforma que separa modelos, provedores, runtime e capabilities. Quero entender o que realmente precisa existir para uma execução confiável — e medir as decisões, não só desenhar diagramas.</p><a href="https://github.com/kersbaumerHugo" target="_blank" rel="noopener noreferrer">Explorar meu GitHub ↗</a></div></details>
+   <details class="hk-work"><summary><span class="hk-work-index">EXP. 02 / TESTING</span><span class="hk-open-icon" aria-hidden="true">+</span><span class="hk-work-title">Homelab</span><span class="hk-work-tagline">Meu laboratório de Linux, redes e infraestrutura.</span></summary><div class="hk-work-expand"><p>É onde testo observabilidade, automações, serviços self-hosted e inferência local. Também é onde minhas suposições encontram bugs, limites de hardware e bastante troubleshooting.</p></div></details>
+   <details class="hk-work"><summary><span class="hk-work-index">EXP. 03 / SHARING</span><span class="hk-open-icon" aria-hidden="true">+</span><span class="hk-work-title">The Tech Circle</span><span class="hk-work-tagline">Comunidade e troca de experiências em tecnologia.</span></summary><div class="hk-work-expand"><p>Ajudo a construir uma comunidade de tecnologia em Macaé e região, reunindo pessoas para compartilhar conhecimento, oportunidades e conversas que saem da tela.</p></div></details>
+  </div>
+  <div class="hk-about-cta"><div><h3>Tem uma ideia interessante?</h3><p>Se você gosta de questionar arquiteturas, construir projetos ou debater alternativas, temos assunto. Discordar também faz parte. :)</p></div><div class="hk-links"><a href="https://github.com/kersbaumerHugo" target="_blank" rel="noopener noreferrer">⌘ GitHub ↗</a><a href="https://www.linkedin.com/in/hugo-kersbaumer/pt/" target="_blank" rel="noopener noreferrer">↗ LinkedIn</a></div></div>
+  <div class="hk-footnote">BUILD → BREAK → LEARN → REBUILD · NO MAGIC, JUST ENGINEERING</div>
+</section>
