@@ -1,67 +1,73 @@
 # Engineering Lab · Profile as Code
 
-Hugo Kersbaumer — identidade técnica no Énóis. De engrenagens e cotas de engenharia para sistemas computacionais, mantendo uma porta aberta para trocar ideias.
-
-**Git é a fonte de verdade.** HTML/CSS/SVG estão em `profile/`. Não há backend, Docker, Terraform, JavaScript ou dependências Python de terceiros.
+Hugo Kersbaumer — do desenho mecânico à arquitetura de sistemas. O código em `profile/` é a fonte de verdade para o banner e o Sobre no Énóis.
 
 ## Arquitetura
 
 ```text
-profile/banner.html + profile/about.html
-       ↓  PR
-GitHub Actions CI → HTML safety check + unittest
-       ↓  merge main
-manual workflow_dispatch (production, confirmação PUBLICAR)
-       ↓
-GET perfil → PATCH campos alterados → GET para verificar
-       ↓
-Perfil público no Énóis
+GitHub PR → CI (check + tests) → merge main
+                               ↓
+             dev01: git pull → publish interativo
+                               ↓
+            GET público → revisão humana → login + 2FA
+                               ↓
+            valida conta → PATCH alterados → GET → logout
 ```
 
-## Rodar localmente (Debian)
+**O GitHub não guarda sessões, senha, OTP ou refresh token.** O job `deploy.yml` foi convertido em uma prévia **somente leitura**; o deploy acontece no terminal do usuário com sessão obtida na hora. O CLI requer a `main` limpa, sincronizada com `origin/main`, e uma execução verde de `ci.yml` para o mesmo SHA.
+
+Não há aplicação backend, Docker, Terraform, JavaScript ou dependências Python adicionais.
+
+## 1. Cadastrar origem do cliente
+
+A API atual exige `X-Client-Origin` em **todas** as requisições. Abra https://enois.ia.br/developers, entre com sua conta e cadastre a origem HTTPS do aplicativo, conforme as regras do portal. Coloque **exatamente** essa origem no `profile/config.json`:
+
+```json
+{
+  "username": "hugo-kersbaumer",
+  "api_base": "https://enois.ia.br/api/v1",
+  "client_origin": "https://ORIGEM-QUE-VOCE-CADASTROU.EXAMPLE"
+}
+```
+
+`client_origin` é configuração pública, **não** segredo. Para experimentar sem alterar o arquivo, use `ENOIS_CLIENT_ORIGIN=https://...` no ambiente. Não copie nem use a origem interna do Énóis fingindo ser o frontend oficial.
+
+## 2. Validar no Debian
 
 ```bash
+cd ~/projects/enois-profile-as-code
 python3 scripts/enois_profile.py check
 python3 -m unittest discover -s tests -v
-python3 scripts/enois_profile.py plan
+python3 scripts/enois_profile.py plan  # rede; somente leitura
 ```
 
-`plan` precisa de rede para consultar o Énóis e é estritamente read-only. `check` e `unittest` são offline.
+Os checks e testes unitários são offline. `plan` consulta o perfil via GET e exige uma origem já registrada.
 
-## Publicar com revisão humana
+## 3. Publicar o commit aprovado
 
-A documentação usa sessão de usuário no header `X-Session-Token` e pode pedir verificação em duas etapas. Não informe sua senha/token no chat e nunca coloque tokens no repositório.
-
-Para publicar no próprio Debian com uma sessão válida **obtida pelo fluxo oficial de login**, no terminal:
+Após merge de um PR com CI verde:
 
 ```bash
-read -rsp 'Token de sessão Énóis: ' ENOIS_SESSION_TOKEN; echo
-export ENOIS_SESSION_TOKEN
-python3 scripts/enois_profile.py plan
-python3 scripts/enois_profile.py deploy --confirm PUBLICAR
-unset ENOIS_SESSION_TOKEN
+git switch main
+git pull --ff-only
+python3 scripts/enois_profile.py publish
 ```
 
-Para publicar via **GitHub Actions**:
+O comando confere branch, workspace limpo, igualdade com `origin/main` e CI verde **do mesmo commit** (requer `gh` instalado e autenticado). Mostra o diff sem token e pede a confirmação `PUBLICAR`. Então solicita e-mail, senha e, caso o login retorne um desafio HTTP 202, o código 2FA. Usa a sessão apenas em memória, valida que o ID da conta é o mesmo do perfil e publica apenas `bioHtml` e/ou `bannerHtml` alterados. Tenta verificar o conteúdo publicado e faz logout mesmo se o deploy falhar.
 
-1. Crie repositório privado ou público e envie os arquivos.
-2. Settings → Environments → `production`. Configure aprovação manual e permita apenas a branch `main`.
-3. No ambiente `production`, adicione o secret `ENOIS_SESSION_TOKEN` (sessão válida; pode expirar).
-4. Actions → **Deploy Énóis profile (manual)** → Run workflow em `main`; digite `PUBLICAR`. O job valida e mostra diferenças antes de enviar o PATCH.
-5. Confira o resultado no perfil público. O script também faz verificação por GET.
+**Observação:** a documentação da API não detalha o JSON de resposta HTTP 202; o cliente procura `challengeId` no nível superior ou dentro de `challenge`. Se o provedor usar outro formato, falha sem publicar. Uma sessão e seu refresh token nunca são impressos ou persistidos por este programa. Mesmo após logout, o sistema operacional pode manter fragmentos na memória até encerramento do processo.
 
-É normal o workflow falhar com 401 quando o token de sessão expirar; renove pelo login oficial, respeitando 2FA. **Não salve senha em GitHub Secrets para logar automaticamente** só para contornar isso.
+## 4. Preview remoto opcional
 
-## CI e segurança
+Em GitHub → Actions → `Preview Énóis profile drift (read-only)` você pode rodar comparação remota, mas antes configure `ENOIS_CLIENT_ORIGIN` em **Settings → Secrets and variables → Actions → Variables**. Este workflow **não** faz login, não recebe token, e nunca realiza PATCH. Não há `ENOIS_SESSION_TOKEN` a cadastrar.
 
-- Deploy não roda em `push` e não publica posts de feed.
-- Faz PATCH mínimo somente em `bioHtml` / `bannerHtml`.
-- Confirma que a sessão pertence ao `id` do perfil de destino.
-- Ignora mudanças não relacionadas a esses campos.
-- Requer confirmação humana antes de editar a conta.
-- Validação local rejeita `<script>`, eventos `on*`, `iframe` e URLs `javascript:`. Isso **não substitui** o sanitizador do Énóis.
-- CSS tem seletores escopados a cada componente e respeita `prefers-reduced-motion`.
+## Segurança e limites
 
-## Nota de compatibilidade
+- Publicação só com confirmação humana e credenciais digitadas localmente.
+- Não envie credenciais por chat, CLI flags, logs, workflow_dispatch inputs ou commits.
+- Validação local de HTML rejeita script, iframe, handlers inline e URLs JavaScript; isso **não substitui** a sanitização feita pelo Énóis.
+- O HTML remoto pode ser normalizado pela API e causar divergência após PATCH. Compare o resultado publicado antes de repetir.
+- Não existe rollback automático; revert do Git + novo `publish` restaura o conteúdo anterior.
+- A documentação pública não esclarece se alterações automatizadas de campos do próprio perfil entram na restrição a publicação de conteúdo por bots. O fluxo mantém autorização humana explícita. Antes de implementar CD autônomo, confirme as regras com a equipe Énóis.
 
-Ainda não realizamos deploy real; o comportamento de sanitização e os limites exatos de HTML do Énóis não estão detalhados na API pública. Veja [CONTRATO-API.md](docs/CONTRATO-API.md).
+Consulte [docs/CONTRATO-API.md](docs/CONTRATO-API.md) para detalhes da API.

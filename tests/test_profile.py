@@ -54,20 +54,20 @@ class ProfileTests(unittest.TestCase):
             {'id': 'user_1', 'bannerHtml': 'same', 'bioHtml': 'old'},
             {'id': 'user_1', 'bannerHtml': 'same', 'bioHtml': 'new'},
         ]
-        config = {'username':'hugo-kersbaumer', 'api_base':'https://enois.ia.br/api'}
+        config = {'username':'hugo-kersbaumer', 'api_base':'https://enois.ia.br/api/v1', 'client_origin':'https://example.org'}
         result = deploy(config, {'bannerHtml':'same', 'bioHtml':'new'}, 'sess_test')
         self.assertTrue(result)
         method, url = http.call_args[0]
         self.assertEqual(method, 'PATCH')
         self.assertEqual(http.call_args.kwargs['body'], {'bioHtml':'new'})
-        self.assertEqual(url, 'https://enois.ia.br/api/me/profile')
+        self.assertEqual(url, 'https://enois.ia.br/api/v1/me/profile')
 
     @patch('scripts.enois_profile.public_profile')
     @patch('scripts.enois_profile.http_json')
     def test_deploy_rejects_wrong_account(self, http, public):
         http.return_value = {'id': 'user_wrong'}
         public.return_value = {'id': 'user_target'}
-        config = {'username':'hugo-kersbaumer', 'api_base':'https://enois.ia.br/api'}
+        config = {'username':'hugo-kersbaumer', 'api_base':'https://enois.ia.br/api/v1', 'client_origin':'https://example.org'}
         with self.assertRaisesRegex(ProfileError, 'não pertence'):
             deploy(config, {'bannerHtml':'a', 'bioHtml':'b'}, 'sess_test')
         self.assertEqual(http.call_count, 1)
@@ -82,3 +82,67 @@ class ProfileTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class InteractiveAuthTests(unittest.TestCase):
+    @patch('scripts.enois_profile.sys.stdin.isatty', return_value=True)
+    @patch('scripts.enois_profile.getpass.getpass', side_effect=['very-secret', '123456'])
+    @patch('builtins.input', return_value='hugo@example.com')
+    @patch('scripts.enois_profile.http_json')
+    @patch('scripts.enois_profile.client_origin', return_value='https://example.org')
+    def test_2fa_login_does_not_persist_credentials(self, origin, http, inp, passwd, tty):
+        from scripts.enois_profile import login_interactive
+        http.side_effect = [(202, {'challengeId': 'ch_123'}), (200, {'token': 'sess_ABC', 'refreshToken': 'secret'})]
+        config = {'api_base': 'https://enois.ia.br/api/v1'}
+        self.assertEqual(login_interactive(config), 'sess_ABC')
+        self.assertEqual(http.call_count, 2)
+        self.assertEqual(http.call_args.kwargs['body'], {'challengeId': 'ch_123', 'code': '123456'})
+        self.assertEqual(http.call_args[0], ('POST', 'https://enois.ia.br/api/v1/auth/2fa/verify'))
+
+    @patch('scripts.enois_profile.sys.stdin.isatty', return_value=True)
+    @patch('scripts.enois_profile.getpass.getpass', return_value='password')
+    @patch('builtins.input', return_value='hugo@example.com')
+    @patch('scripts.enois_profile.http_json', return_value=(202, {'unknown': 1}))
+    @patch('scripts.enois_profile.client_origin', return_value='https://example.org')
+    def test_unrecognized_2fa_challenge_fails_closed(self, origin, http, inp, passwd, tty):
+        from scripts.enois_profile import login_interactive
+        with self.assertRaisesRegex(ProfileError, 'challengeId'):
+            login_interactive({'api_base': 'https://enois.ia.br/api/v1'})
+
+    @patch('scripts.enois_profile.sys.stdin.isatty', return_value=False)
+    @patch('scripts.enois_profile.client_origin', return_value='https://example.org')
+    def test_cannot_login_in_ci(self, origin, tty):
+        from scripts.enois_profile import login_interactive
+        with self.assertRaisesRegex(ProfileError, 'TTY'):
+            login_interactive({'api_base': 'https://enois.ia.br/api/v1'})
+
+    @patch.dict('os.environ', {'ENOIS_CLIENT_ORIGIN': 'https://example.org'})
+    def test_registered_origin_from_environment(self):
+        from scripts.enois_profile import client_origin
+        self.assertEqual(client_origin({}), 'https://example.org')
+
+    @patch.dict('os.environ', {'ENOIS_CLIENT_ORIGIN': ''})
+    def test_missing_origin_fails_before_request(self):
+        from scripts.enois_profile import client_origin
+        with self.assertRaisesRegex(ProfileError, 'Cadastre'):
+            client_origin({'client_origin': ''})
+
+    @patch('scripts.enois_profile.client_origin', return_value='https://example.org')
+    @patch('scripts.enois_profile.http_json')
+    def test_logout_uses_ephemeral_session(self, http, origin):
+        from scripts.enois_profile import logout
+        logout({'api_base': 'https://enois.ia.br/api/v1'}, 'sess_123')
+        self.assertEqual(http.call_args.kwargs['token'], 'sess_123')
+
+    @patch('scripts.enois_profile.client_origin', return_value='https://example.org')
+    @patch('scripts.enois_profile.http_json')
+    @patch('scripts.enois_profile.public_profile')
+    def test_deploy_writes_v1_endpoint(self, public, http, origin):
+        config = {'username': 'hugo-kersbaumer', 'api_base': 'https://enois.ia.br/api/v1'}
+        http.side_effect = [{'id':'user_1'}, {'ok': True}]
+        public.side_effect = [
+            {'id': 'user_1', 'bannerHtml': 'old', 'bioHtml': 'same'},
+            {'id': 'user_1', 'bannerHtml': 'new', 'bioHtml': 'same'},
+        ]
+        self.assertTrue(deploy(config, {'bannerHtml':'new', 'bioHtml':'same'}, 'sess_123'))
+        self.assertEqual(http.call_args[0], ('PATCH', 'https://enois.ia.br/api/v1/me/profile'))
+        self.assertEqual(http.call_args.kwargs['body'], {'bannerHtml':'new'})

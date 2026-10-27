@@ -1,37 +1,26 @@
-name: Deploy Énóis profile (manual)
+# Publish has moved to an interactive, short-lived session on the operator's workstation.
+# This workflow intentionally NEVER authenticates to Énóis or performs PATCH.
+name: Preview Énóis profile drift (read-only)
 
 on:
   workflow_dispatch:
-    inputs:
-      confirm:
-        description: 'Digite PUBLICAR para confirmar atualização de banner e Sobre'
-        required: true
-        type: string
 
 permissions:
   contents: read
 
-concurrency:
-  group: enois-profile-production
-  cancel-in-progress: false
-
 jobs:
-  deploy:
-    if: github.ref == 'refs/heads/main' && inputs.confirm == 'PUBLICAR'
+  preview:
     runs-on: ubuntu-latest
-    environment: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Validate and test
+      - name: Offline check
         run: |
           python scripts/enois_profile.py check
           python -m unittest discover -s tests -v
-      - name: Show drift (public read)
-        run: python scripts/enois_profile.py plan
-      - name: Deploy changed fields and verify
+      - name: Read-only comparison
         env:
-          ENOIS_SESSION_TOKEN: ${{ secrets.ENOIS_SESSION_TOKEN }}
-        run: python scripts/enois_profile.py deploy --confirm PUBLICAR
+          ENOIS_CLIENT_ORIGIN: ${{ vars.ENOIS_CLIENT_ORIGIN }}
+        run: python scripts/enois_profile.py plan

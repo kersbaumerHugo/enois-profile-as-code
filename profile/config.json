@@ -1,4 +1,5 @@
 {
   "username": "hugo-kersbaumer",
-  "api_base": "https://enois.ia.br/api"
+  "api_base": "https://enois.ia.br/api/v1",
+  "client_origin": ""
 }
